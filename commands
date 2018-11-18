@@ -1,0 +1,5 @@
+tell me a joke : say "Knock Knock"; say -v Samantha "Who's there?"; say "Shark Head"; say -v Samantha "Shark Head Who?"; say "Chomp!"
+open chrome: open -a 'Google Chrome'
+open google chrome: open -a 'Google Chrome'
+open notes : open -a 'Notes'
+open email : open -a 'Google Chrome'
