@@ -184,7 +184,7 @@ class GoogleSpeechToText(threading.Thread):
 class TextProcessor(threading.Thread): 
     commands = { 'exit' : None, 'cancel' : None }
     nysiis = None
-    nysiis_distance_threshold = 0.8
+    nysiis_distance_threshold = 100
 
     def __init__(self, command_file):
         super(TextProcessor, self).__init__()
@@ -225,10 +225,12 @@ class TextProcessor(threading.Thread):
         spoken = fuzzy.nysiis(spoken)
         distances = { distance(spoken, k)/float(len(spoken)) : v for k, v in self.nysiis.items() }
         min_dist = min(distances.keys())
-        if min_dist < self.nysiis_distance_threshold:
-            conf = 95-45*min_dist/self.nysiis_distance_threshold
+        conf = 95-45*min_dist/self.nysiis_distance_threshold
+        if conf >= self.nysiis_distance_threshold:
             print(datetime.datetime.now(), "Matched phrase %r with confidence of %0.1f" % (distances[min_dist], conf))
             return distances[min_dist]
+        else:
+            print(datetime.datetime.now(), "Matched phrase %r with confidence of %0.1f; confidence too low. Ignoring!" % (distances[min_dist], conf))
 
         return None
 
