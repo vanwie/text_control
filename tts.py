@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import pyaudio
-import queue
+import Queue as queue
 import threading
 import time
 import numpy as np
@@ -9,7 +9,6 @@ from concurrent import futures
 import soundfile as sf
 import tempfile
 import shutil
-#import boto3
 import os
 import requests
 from uuid import uuid4
@@ -24,6 +23,9 @@ from google.cloud import speech
 from google.cloud.speech import enums
 from google.cloud.speech import types
 
+# Add some exports that the commands file wants
+os.environ['KEYPRESS'] = 'xvkbd -xsendevent -secure -text'
+
 mic_buffer = queue.Queue()
 stt_buffer = queue.Queue()
 text_out = queue.Queue()
@@ -36,8 +38,6 @@ RATE = 22050
 CHUNK = 2205 # 100ms
 
 CAL_SIZE=50
-
-S3_BUCKET = 'vanwie.stt'
 
 class AudioSegmenter(threading.Thread): 
     _damping = 0.15
@@ -184,7 +184,7 @@ class GoogleSpeechToText(threading.Thread):
 class TextProcessor(threading.Thread): 
     commands = { 'exit' : None, 'cancel' : None }
     nysiis = None
-    nysiis_distance_threshold = 0.7
+    nysiis_distance_threshold = 0.8
 
     def __init__(self, command_file):
         super(TextProcessor, self).__init__()
@@ -223,7 +223,7 @@ class TextProcessor(threading.Thread):
 
         # Attempt 2: phonetic
         spoken = fuzzy.nysiis(spoken)
-        distances = { distance(spoken, k)/len(spoken) : v for k, v in self.nysiis.items() }
+        distances = { distance(spoken, k)/float(len(spoken)) : v for k, v in self.nysiis.items() }
         min_dist = min(distances.keys())
         if min_dist < self.nysiis_distance_threshold:
             conf = 95-45*min_dist/self.nysiis_distance_threshold
@@ -256,7 +256,7 @@ class TextProcessor(threading.Thread):
                             proc.kill()
                 else:
                     print(datetime.datetime.now(), "Matched phrase %r, will execute command %r" % (phrase,  self.commands[phrase]))
-                    if proc and proc.poll() is not None:
+                    if proc and proc.poll() is None:
                         print(datetime.datetime.now(), "The previous command is still running!")
                     else:
                         proc = subprocess.Popen(self.commands[phrase], shell=True)

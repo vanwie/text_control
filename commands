@@ -1,5 +1,618 @@
-tell me a joke : say "Knock Knock"; say -v Samantha "Who's there?"; say "Shark Head"; say -v Samantha "Shark Head Who?"; say "Chomp!"
-open chrome: open -a 'Google Chrome'
-open google chrome: open -a 'Google Chrome'
-open notes : open -a 'Notes'
-open email : open -a 'Google Chrome'
+#
+# for some of my commands to work you must set 
+# environment variables in your blather startup 
+# script. For example here are the environment 
+# variables that I set in mine:
+# 
+#   export GST_PLUGIN_PATH=/usr/local/lib/gstreamer-0.10
+#   export VOICE="/usr/bin/espeak"
+#   export CONFIGDIR="/home/$(whoami)/.config/blather"
+#   export CLIP="/home/$(whoami)/.local/share/clipit/history"
+#   export KEYPRESS="xvkbd -xsendevent -secure -text"
+#   export FM="thunar"
+#
+# I also store lots of data for text input in text 
+# files and have a special directory of blather scripts. 
+# If certain series of commands get too complicated then 
+# I will just put them in a script and call the script 
+# from the blather command.
+#
+# xdotool keys: alt, Tab, Control, super, Up, Down, 
+#               BackSpace, Page_Up, Page_Down, Left,
+#               Right, space, Escape, Home, End, F1, F2 (etc)
+#               period, comma, dollar, equal, 
+#               XF86AudioPlay, XF86AudioPrev, XF86AudioNext
+#               XF86AudioLowerVolume, XF86AudioRaiseVolume
+#               XF86AudioMute
+#
+# You will notice that I use both xdotool and xvkbd for keystroke 
+# commands. In general I prefer xdotool for short key combinations 
+# and single key presses, while I use xvkbd for strings of characters 
+# and for typing the contents of text files. 
+#===============================================================
+
+# ------- Blather Maintenance -------- #
+# Command to display the current coordinates of the mouse. Useful
+# when trying to automate mouse actions
+
+GET MOUSE LOCATION: coords=$(xdotool getmouselocation | sed -e 's/screen.*$//') && xmessage $coords 
+
+# Chrome App: Speech Recognizier -- to turn on the 
+# mic you must calibrate mic first. To calibrate the mic,
+# hover the mouse over the mic icon and say the
+# command. It will store the coordinates in text files and the
+# "microphone" command will use those coordinates to click the mouse
+# in the right spot.
+CALIBRATE MIKE: $CONFIGDIR/scripts/calibrate_mic.sh
+SPEECH RECOGNIZER: wmctrl -a chromium && xdotool key alt+1 Control+l Shift+Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab Control+a
+DICTA NOTE: wmctrl -a chromium && xdotool key alt+1 Control+l Shift+Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab Control+a
+MICROPHONE: $CONFIGDIR/scripts/mic_on.sh
+FIX SPACING: xdotool key Control+a Control+c && text=$(xclip -o | sed -e 's/ * / /g' | sed -e 's/^ * //') && sleep .1 && $KEYPRESS "$text" 
+OPEN DICTATION BOX: chromium --app=https://www.google.com/intl/en/chrome/demos/speech.html --app-window-size=600,500 && sleep 1 && xdotool key Tab Tab Return
+GO TO DICTATION BOX: wmctrl -a "Chrome Browser" && xdotool key Control+r && sleep 1 && xdotool key Tab Tab Return
+CLOSE DICTATION BOX: wmctrl -c "Chrome Browser"
+STOP TALKING: xdotool key Tab && sleep .2 && $KEYPRESS '\r'
+TRANSFER KEEP: xdotool key Control+c && sleep .1 && xdotool key alt+Tab && sleep .1 && xdotool key Control+v
+TRANSFER TEXT: xdotool key Control+c && sleep .1 && xdotool key alt+Tab && sleep .1 && text=$(xclip -o | sed -e 's/[Ss]top talking//') && sleep .1 && $KEYPRESS "$text" 
+CENTER CURSOR: center=$(xdpyinfo |grep dimensions | awk -F " " '{ print $2 }' | awk -F "x" '{ print $1/2 " " $2/2 }') && xdotool mousemove $center
+
+# ------- Generic Desktop Commands ------- #
+ADDRESS FIELD: xdotool key Control+l
+ALWAYS ON TOP: xdotool key alt+space && sleep .2 && xdotool key l t
+CLOSE DIALOG: xdotool key alt+c
+CLOSE TAB: xdotool key Control+w
+CLOSE WINDOW: xdotool key Control+w
+DONT SAVE: xdotool key alt+d
+FIND ON PAGE: xdotool key Control+f
+GO BACK: xdotool key alt+Left
+GO FORWARD: xdotool key alt+Right
+LOG ME OUT: $KEYPRESS "'log out\r"
+LOG OUT: $KEYPRESS "'logout\r"
+NEW FILE: xdotool key Control+n
+NEW TAB: xdotool key Control+t
+NEW WEB SEARCH: chromium https://www.google.com/ && sleep 1 && xdotool key Tab Return
+NEW WINDOW: xdotool key Control+n
+NEXT TAB: xdotool key Control+Page_Down
+PAGE DOWN: xdotool key Page_Down
+PAGE UP: xdotool key Page_Up
+PREVIOUS TAB: xdotool key Control+Page_Up
+QUIT APPLICATION: xdotool key Control+q
+REFRESH PAGE: xdotool key Control+r
+SAVE FILE: xdotool key Control+s
+SEARCH FIELD: xdotool key Control+k
+SIGN ME OUT: $KEYPRESS "' out\r"
+SKIP TO MAIN: $KEYPRESS "'skip\r"
+TAB EIGHT: xdotool key alt+8
+TAB FIVE: xdotool key alt+5
+TAB FOUR: xdotool key alt+4
+TAB NINE: xdotool key alt+9
+TAB ONE: xdotool key alt+1
+TAB SEVEN: xdotool key alt+7
+TAB SIX: xdotool key alt+6
+TAB THREE: xdotool key alt+3
+TAB TWO: xdotool key alt+2
+USERNAME FIELD: $KEYPRESS "/username\[Tab]"
+
+# on Firefox, copy string to clipboard then run this command.
+# For example I use the command to copy the name of a student from
+# an email and find it quickly in a very long list of names inside
+# Moodle. 
+FIND STRING: $KEYPRESS "/$(xclip -o)"
+
+METTA F TWO: xdotool key alt+F2
+APP LAUNCHER: xdotool key alt+F2
+CATAPULT: xdotool key alt+F2
+
+# General purpose navigation and desktop control commands
+#CYCLE WINDOWS: xvkbd -no-jump-pointer -secure -text '\A\[`]'
+NEXT WORKSPACE: xdotool key Control+alt+Right
+#MOVE TO NEXT WORKSPACE: xvkbd -no-jump-pointer -secure -text '\C\A\S\[Down]'
+MOVE TO NEXT WORKSPACE: xdotool key alt+space && sleep .1 && xdotool key s 2
+PREVIOUS WORKSPACE: xdotool key Control+alt+Left
+MOVE TO PREVIOUS WORKSPACE: xdotool key alt+space && sleep .1 && xdotool key s 1
+#MOVE TO PREVIOUS WORKSPACE: xvkbd -no-jump-pointer -secure -text '\C\A\S\[Up]'
+
+# ----------- Keystrokes ------------ #
+
+BACK SPACE: xdotool key BackSpace
+CANCEL: xdotool key Escape
+COLON: $KEYPRESS ":"
+COMMA: $KEYPRESS ","
+CONTROL ARE: xdotool key Control+r
+CONTROL A: xdotool key Control+a
+CONTROL B: xdotool key Control+b
+CONTROL C: xdotool key Control+c
+CONTROL D: xdotool key Control+d
+CONTROL ENTER: xdotool key Control+Return
+CONTROL E: xdotool key Control+e
+CONTROL F: xdotool key Control+f
+CONTROL H: xdotool key Control+h
+CONTROL IN: xdotool key Control+n
+CONTROL I: xdotool key Control+i
+CONTROL K: xdotool key Control+k
+CONTROL L: xdotool key Control+l
+CONTROL O: xdotool key Control+o
+CONTROL P: xdotool key Control+p
+CONTROL SHIFT C: xdotool key Control+C
+CONTROL SHIFT E: xdotool key Control+E
+CONTROL SHIFT IN: xdotool key Control+N
+CONTROL SHIFT O: xdotool key Control+O
+CONTROL SHIFT V: xdotool key Control+V
+CONTROL SHIFT W: xdotool key Control+W
+DOCUMENT MENU: xdotool key alt+d
+DOWN ARROW: xdotool key Down
+EDIT MENU: xdotool key alt+e
+EQUALS: $KEYPRESS "="
+EXCLAMATION POINT: $KEYPRESS "!"
+FILE MENU: xdotool key alt+f
+FIVE SPACES: $KEYPRESS "     "
+FORMAT MENU: xdotool key alt+o
+FOUR SPACES: $KEYPRESS "    "
+HASH TAG: $KEYPRESS "#"
+HELP MENU: xdotool key alt+h
+INSERT MENU: xdotool key alt+i
+
+LEFT ARROW: xdotool key Left
+MAXIMIZE WINDOW: xdotool key alt+space && sleep .1 && xdotool key x
+#MAXIMIZE WINDOW: xdotool key super+Up # for gnome 3
+METTA BOB: xdotool key alt+b
+METTA C: xdotool key alt+c
+METTA EFF TWO: xdotool key Alt+F2
+METTA EYE: xdotool key alt+i
+METTA L: xdotool key alt+l
+METTA m: xdotool key alt+m
+METTA n: xdotool key alt+n
+METTA P: xdotool key alt+p
+# It kept confusing the letter S with the letter F so I had to
+# substitute a word how to get it right. "Scooby" :)
+METTA SCOOBY: xdotool key alt+s
+METTA W: xdotool key alt+w
+PERIOD: $KEYPRESS "."
+PRESS DELETE: xdotool key Delete
+PRESS EIGHT: xdotool key 8
+PRESS END: xdotool key End
+PRESS ENTER: xdotool key Return
+PRESS ESCAPE: xdotool key Escape
+PRESS FIVE: xdotool key 5
+PRESS FOUR: xdotool key 4
+PRESS F: xdotool key f
+PRESS HOME: xdotool key Home
+PRESS NINE: xdotool key 9
+PRESS ONE: xdotool key 1
+PRESS Q: xdotool key q
+PRESS SEVEN: xdotool key 7
+PRESS SIX: xdotool key 6
+PRESS TAB: xdotool key Tab
+PRESS THREE: xdotool key 3
+PRESS TWO: xdotool key 2
+PRESS ZERO: xdotool key 0
+QUESTION MARK: xdotool key question
+RESTORE WINDOW: xdotool key alt+space && sleep .1 && xdotool key e
+#RESTORE WINDOW: xdotool key super+Down # for gnome 3
+RIGHT ARROW: xdotool key Right
+SEMICOLON: $KEYPRESS ";"
+SPACE BAR: xdotool key space
+SUPER KEY: xdotool key super
+SWITCH BACK: xdotool key alt+Tab
+TILDE: $KEYPRESS "~"
+TOOLS MENU: xdotool key alt+t
+UP ARROW: xdotool key Up
+VIEW MENU: xdotool key alt+v
+
+# ----------- Vim ------------ #
+
+
+APPEND TO CURRENT LINE: $KEYPRESS "A" 
+CHANGE WORD: $KEYPRESS "cw"
+CLICK AND HOLD: xdotool mousedown 1
+CLICK HERE: xdotool click 1
+COLON DOLLAR SIGN: $KEYPRESS ":$\r"
+COLON W: $KEYPRESS ":w\r"
+COLON ZERO: $KEYPRESS ":0\r"
+DELETE LINES: $KEYPRESS "dd"
+DELETE WORD: $KEYPRESS "dw"
+DOUBLE CLICK: xdotool click 1 ; xdotool click 1
+MIDDLE CLICK: xdotool key ctrl+shift+v
+MOUSE UP: xdotool mouseup 1
+NEW LINE ABOVE: $KEYPRESS "O"
+NEW LINE BELOW: $KEYPRESS "o"
+NEXT BUFFER: xdotool key ctrl+w j
+PRESS I: $KEYPRESS "i"
+PREVIOUS BUFFER: xdotool key ctrl+w k
+PUT AFTER: $KEYPRESS "p"
+PUT BEFORE: $KEYPRESS "P"
+RIGHT CLICK: xdotool click 3
+SPLIT BUFFER: $KEYPRESS ":sp "
+WRITE AND QUIT: $KEYPRESS ":wq\r"
+YANK LINES: $KEYPRESS "yy"
+YANK TO THE END: $KEYPRESS "y$"
+YANK WORD: $KEYPRESS "yw"
+ZEE OUT: $KEYPRESS "ZZ"
+
+# ----------- Gmail ------------ #
+
+GO TO INBOX: $KEYPRESS "gi"
+SELECT ALL UNREAD: $KEYPRESS "*u"
+MOVE TO TRASH: $KEYPRESS "#"
+
+#========================================================================
+# Dealing with the file manager is much easier when you use thunar 
+# because it does not keep changing the window title the way nautilus 
+# does. In order to switch between machines having nautilus and 
+# thunar I created a couple of scripts. Not using them right now 
+# because I'm not using nautilus on any of my computers at the moment.
+#========================================================================
+
+OPEN FILE MANAGER: $FM &
+GO TO FILE MANAGER: wmctrl -a "File Manager"
+QUIT FILE MANAGER: pkill $FM
+
+OPEN EVINCE: evince &
+GO TO EVINCE: $CONFIGDIR/scripts/ev_speak.sh
+QUIT EVINCE: pkill evince
+
+SHOW CLIP BOARD: xdotool key Control+alt+h
+
+# Rhythmbox requires fancy stuff b/c window Title changes w/each new song
+OPEN RHYTHMBOX: rhythmbox &
+GO TO RHYTHMBOX: rid=$(pgrep rhythmbox) && rwinname=$(wmctrl -lp |grep $rid |sed -e "s/.*$rid * //" | sed -e "s/$(hostname) //") && wmctrl -a $rwinname
+QUIT RHYTHMBOX: rid=$(pgrep rhythmbox) && rwinname=$(wmctrl -lp |grep $rid |sed -e "s/.*$rid * //" | sed -e "s/$(hostname) //") && wmctrl -c $rwinname
+SEARCH MUSIC: xvkbd -no-jump-pointer -secure -text '\As'
+
+OPEN CHROMIUM: chromium &
+GO TO CHROMIUM: wmctrl -a chromium
+QUIT CHROMIUM: wmctrl -c chromium
+
+OPEN CALCULATOR: xcalc &
+QUIT CALCULATOR: wmctrl -c xcalc
+
+OPEN EX CHAT: xchat &
+GO TO EX CHAT: wmctrl -a xchat
+QUIT EX CHAT: wmctrl -c xchat
+POST FROM EX CHAT: xdotool key Control+a Control+c && wmctrl -a xchat && xdotool key Control+a Control+v && sleep .2 && $KEYPRESS "\r"
+EX CHAT REPLY: xdotool key Control+a Control+c && wmctrl -a chromium && xdotool key alt+1 Control+l Shift+Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab Control+a Control+v
+
+OPEN FIREFOX: firefox &
+GO TO FIREFOX: wmctrl -a firefox
+QUIT FIREFOX: wmctrl -c firefox
+FIREFOX PREFERENCES: xdotool key alt+e n
+
+OPEN FILE ZILLA: filezilla &
+GO TO FILE ZILLA: wmctrl -a filezilla
+QUIT FILE ZILLA: wmctrl -c filezilla
+SITE MANAGER: xdotool key Control+s
+
+OPEN V L C: vlc &
+GO TO V L C: wmctrl -a vlc
+QUIT V L C: wmctrl -c vlc
+PLAY FASTER: xdotool key Alt+l e f
+NORMAL SPEED: xdotool key Alt+l e o
+HALF SIZE: xdotool key Alt+v z Down Return
+FULL SIZE: xdotool key Alt+v z Down Down Return
+OPEN VOLUME CONTROL: pavucontrol &
+GO TO VOLUME CONTROL: wmctrl -a "Volume Control"
+
+# ----------- Terminator ------------ #
+# this requires fancy stuff b/c window Title doesn't match app name
+OPEN TERMINATOR: terminator &
+GO TO TERMINATOR: tid=$(pgrep termin) && termwin=$(wmctrl -lp |grep $tid | awk -F " " '{ print $1 }') && wmctrl -i -a $termwin
+QUIT TERMINATOR: pkill termin
+
+OPEN LIBREOFFICE: loffice &
+OPEN WRITER: libreoffice --writer &
+GO TO WRITER: wmctrl -a writer
+QUIT WRITER: wmctrl -c writer
+QUIT LIBREOFFICE: wmctrl -c libreoffice
+GO TO LIBREOFFICE: wmctrl -a libreoffice
+RECENT L O FILES: xdotool key alt+f u
+
+# ----------- Audacity -------------#
+
+OPEN AUDACITY: audacity &
+GO TO AUDACITY: aid=$(pgrep audacity) && awinname=$(wmctrl -lp |grep $aid |sed -e "s/.*$aid * //" | sed -e "s/$(hostname) //") && wmctrl -a $awinname
+AMPLIFY THIS: xdotool key alt+c 
+COMPRESS THIS: xdotool key alt+c Up Right Down Down Return
+COMPRESSION VALUES: $KEYPRESS "1.0\[Tab]\[Tab]\[Tab]\[Tab]-32.0\[Tab]\[Tab]\[Tab]\[Tab].75\[Tab]\[Tab]"
+PASS FILTER: xdotool key alt+c Up Right Down Down Down Down Down Down Return
+ALIGN WITH CURSOR: xdotool key alt+t a Down Return
+
+#OPEN R SINK: grsync &
+#GO TO R SINK: wmctrl -a grsync
+#QUIT R SINK: wmctrl -c grsync
+
+
+
+# ------ System Administration -------#
+
+APACHE CONFIG DERR: $KEYPRESS 'cd /etc/apache2/sites-available/\r'
+APT CASH SEARCH: $KEYPRESS 'apt-cache search '
+APT GET INSTALL: $KEYPRESS 'apt-get install '
+APTITUDE DIST UPGRADE: $KEYPRESS 'apt-get dist-upgrade\r'
+APTITUDE UPDATE: $KEYPRESS 'aptitude update\r'
+ENGINE EX CONFIG DERR: $KEYPRESS 'cd /etc/nginx/sites-available/\r'
+EXIT: $KEYPRESS 'exit\r'
+GIT COMMIT ALL: $KEYPRESS "git commit -a\r"
+GIT PULL: $KEYPRESS "git pull\r"
+GIT STATUS: $KEYPRESS "git status\r"
+HOME BIN: $KEYPRESS 'cd ~/bin\r'
+IN IT EXPRESSION : $KEYPRESS 'sudo /etc/init.d/'
+INSERT AWK EXPRESSION: $KEYPRESS "$(cat $CONFIGDIR/data/awk.txt)"
+INSERT SED EXPRESSION: $KEYPRESS "$(cat $CONFIGDIR/data/sed.txt)"
+LESS INSTALL: $KEYPRESS "less INSTAL\[Tab]\r"
+LESS READ ME: $KEYPRESS "less READM\[Tab]\r"
+MUSIC TWO ADDRESS: $KEYPRESS "http://music2.louisiana.edu/"
+PACKAGE INFO: $KEYPRESS 'apt-cache show '
+PACKAGE SEARCH: $KEYPRESS 'apt-cache search '
+PING TEST: $KEYPRESS 'ping -c 3 www.google.com\r'
+RESTART APACHE: $KEYPRESS '/etc/init.d/apache2 restart\r'
+RESTART ENGINE EX: $KEYPRESS '/etc/init.d/nginx restart\r'
+SEE RETURN CODE: $KEYPRESS "echo $?\r"
+sites available: $KEYPRESS 'cd ../sites-available/\r'
+sites enabled: $KEYPRESS 'cd ../sites-enabled/\r'
+SLASH ET SEE: $KEYPRESS 'cd /etc\r'
+S S H e machines: $KEYPRESS "ssh emachines\r"
+S S H MUSIC TWO: $KEYPRESS "ssh music2\r"
+S S H own cloud: $KEYPRESS "ssh own\r"
+SUDO: $KEYPRESS 'sudo '
+SYSTEM LOG DERR: $KEYPRESS 'cd /var/log/\r'
+UPDATE ALTERNATIVES: $KEYPRESS "sudo update-alternatives --config "
+USER BIN: $KEYPRESS 'cd /usr/bin\r'
+USER LOCAL BIN: $KEYPRESS 'cd /usr/local/bin\r'
+WEB FILES DERR: $KEYPRESS 'cd /var/www/\r'
+WEBSERVER PERMISSIONS: $KEYPRESS 'chown -R www-data:www-data '
+
+
+# ----------- editing ----------- #
+
+SELECT ALL: xdotool key Control+a
+SELECT THIS WORD: xdotool key Control+Left Control+Shift+Right
+#SELECT THIS WORD: $KEYPRESS "\C\[Left]\C\[Shift]\[Right]"
+SELECT THIS SENTENCE: xdotool key Control+Shift+Delete Control+z
+# BUGGY!! NEEDS FIXING
+#DELETE THIS SENTENCE: text=/tmp/text.txt && xdotool key Shift+Page_Down && xdotool key Control+c && sleep .1 && xclip -o | sed -n 's/[^.]*.//1p' > $text && xvkbd -xsendevent -secure -file "$text" && sleep .5 && rm $text
+
+ANGLE BRACKET THIS: xdotool key Control+c && $KEYPRESS '<'"$(xclip -o)"'>'
+CAMEL CAPS THIS: xdotool key Control+c && xclip -o | sed -r 's/\<./\U&/g' | sed -e 's/ //g'| xclip -i && $KEYPRESS "$(xclip -o)" 
+CAPITALIZE THIS: xdotool key Control+c && xclip -o | sed -r 's/\<./\U&/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+COPY: xdotool key Control+c
+CUT: xdotool key Control+x
+DELETE PREVIOUS SENTENCE: xdotool key Control+Shift+BackSpace
+DELETE THIS SENTENCE: xdotool key Control+Shift+Delete
+EXPAND CONTRACTIONS: expansions=/tmp/expand.txt && cat $CONFIGDIR/scripts/contractions.sed | awk -F "/" '{ print "s/"$3"/" $2 "/g" }' > $expansions && sleep .2 && xdotool key Control+c && xclip -o | sed -f $expansions | xclip -i && $KEYPRESS "$(xclip -o)" && rm $expansions
+FIX BLADDER: xdotool key Control+c && xclip -o | sed -e 's/[Bb]ladder/blather/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX BROTHER: xdotool key Control+a Control+c && xclip -o | sed -e 's/[Bb]rother/blather/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX CHANCE:  xdotool key Control+a Control+c && xclip -o | sed -e 's/[Cc]hance/chants/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX COLONS: xdotool key Control+c && xclip -o | sed -e 's/ [cC]olon/:/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX COMMAS: xdotool key Control+a Control+c && xclip -o | sed -e 's/ [Kk]ama/,/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX Connect: xdotool key Control+a Control+c && xclip -o | sed -e 's/[Kk]inect/Connect/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX HEYBUDDY: xdotool key Control+a Control+c && xclip -o | sed -e 's/[Hh]ey buddy/heybuddy/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX MOBILE:  xdotool key Control+a Control+c && xclip -o | sed -e 's/[mM]obile/Mumble/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX PERIODS: xdotool key Control+c && xclip -o | sed -e 's/ [Pp]eriod/./g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX PIECES: xdotool key Control+a Control+c && xclip -o | sed -e 's/[pP]eace/piece/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FIX PUMP EYE OH: $KEYPRESS "pump.io"
+FIX WEATHER: xdotool key Control+a Control+c && xclip -o | sed -e 's/[wW]eather/blather/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+FROWNEY FACE: $KEYPRESS ":("
+GRAB THAT: xdotool key Control+a Control+c
+HUGE GRIN FACE: $KEYPRESS "8^D"
+HYPHENATE THIS: xdotool key Control+c && xclip -o | sed -e 's/ /-/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+MAKE CONTRACTIONS: xdotool key Control+c && xclip -o | sed -f $CONFIGDIR/scripts/contractions.sed | xclip -i && $KEYPRESS "$(xclip -o)" 
+MAKE LOWERCASE: xdotool key Control+c && xclip -o | sed 's/\(.*\)/\L\1/' | xclip -i && $KEYPRESS "$(xclip -o)"
+MAKE UPPERCASE: xdotool key Control+c && xclip -o | sed 's/\(.*\)/\U\1/' | xclip -i && $KEYPRESS "$(xclip -o)"
+NEXT WORD: xdotool key Control+Right
+OPTIMAL COLUMN WIDTH: xdotool key alt+o m o Return
+PASTE: xdotool key Control+v
+PERENTHESIZE THIS: xdotool key Control+c && $KEYPRESS '('"$(xclip -o)"')'
+PREVIOUS WORD: xdotool key Control+Left
+QUOTE THIS: xdotool key Control+c && $KEYPRESS '"' && xdotool key Control+v && $KEYPRESS '"'
+REMOVE SPACES: xdotool key Control+c && xclip -o | sed -e 's/ //g' | xclip -i && $KEYPRESS "$(xclip -o)"
+SELECT PREVIOUS SENTENCE: xdotool key Control+Shift+BackSpace && xdotool key Control+z
+SMART QUOTES: xdotool key Control+c && $KEYPRESS '&#8220;' && xdotool key Control+v && $KEYPRESS '&#8221;'
+SMILEY FACE: $KEYPRESS ":)"
+# AWESOMENESS COMING NEXT
+SORT THIS: xdotool key Control+c && xclip -o > /tmp/unsorted.txt && sort /tmp/unsorted.txt > /tmp/sorted.txt && xvkbd -xsendevent -secure -file /tmp/sorted.txt 
+SPACES TO UNDERSCORES: xdotool key Control+c && xclip -o | sed -e 's/ /_/g' | xclip -i && $KEYPRESS "$(xclip -o)" 
+UNDO: xdotool key Control+z
+X D O TOOL KEY: $KEYPRESS "xdotool key "
+
+# ----------- text entry ----------- #
+
+ENTER FIRST NAME: $KEYPRESS "John"
+ENTER LAST NAME: $KEYPRESS "Doe"
+ENTER NICK NAME: $KEYPRESS "Johnny"
+ENTER FULL NAME: $KEYPRESS "John Doe"
+ENTER CELL PHONE: $KEYPRESS "$(cat $CONFIGDIR/data/cell.txt)"
+ENTER OFFICE PHONE: $KEYPRESS "$(cat $CONFIGDIR/data/office.txt)"
+ENTER FIBER EMAIL: $KEYPRESS "$(cat $CONFIGDIR/data/fiber.txt)"
+ENTER GEE MAIL ADDRESS: $KEYPRESS "$(cat $CONFIGDIR/data/gmail.txt)"
+ENTER WORK EMAIL: $KEYPRESS "$(cat $CONFIGDIR/data/workmail.txt)"
+ENTER DADS EMAIL: $KEYPRESS "$(cat $CONFIGDIR/data/dad.txt)"
+ENTER STREET: $KEYPRESS "$(cat $CONFIGDIR/data/street.txt)"
+ENTER CITY: $KEYPRESS "$(cat $CONFIGDIR/data/city.txt)" 
+ENTER ZIP: $KEYPRESS "$(cat $CONFIGDIR/data/zip.txt)"
+ENTER FULL ADDRESS: xvkbd -xsendevent -secure -file $CONFIGDIR/data/homeaddress.txt
+U L L: $KEYPRESS "University of Louisiana at Lafayette"
+S O M: $KEYPRESS "School of Music"
+
+# ------- Media -- Depends on mpg123 ------ #
+
+LOWER VOLUME: xdotool key XF86AudioLowerVolume XF86AudioLowerVolume 
+MUTE SOUND: xdotool key XF86AudioMute
+NEXT TRACK: xdotool key XF86AudioNext
+PAUSE PLAY: xdotool key XF86AudioPlay
+PLAY PAUSE: xdotool key XF86AudioPlay
+PREVIOUS TRACK: xdotool key XF86AudioPrev XF86AudioPrev 
+RAISE VOLUME: xdotool key XF86AudioRaiseVolume XF86AudioRaiseVolume
+RESTART TRACK: xdotool key XF86AudioPrev 
+START JAZZ: mpg123 --quiet -@ http://130.86.239.231:8000/JAZZ96 &
+START K M F A: mpg123 --quiet -@ http://pubint.ic.llnwd.net/stream/pubint_kmfa &
+START K R V S: mpg123 --quiet -@ http://pubint.ic.llnwd.net/stream/pubint_krvs1 &
+START K U H A: mpg123 --quiet -@ http://129.7.48.199:80/KUHF-HD2-128K &
+START W S M: mpg123 --quiet -@ http://2033.live.streamtheworld.com:80/WSMAM_SC &
+STOP RADIO: pkill mpg123
+TITAN T V: $BROWSER http://titantv.com/account/login.aspx?returnUrl=%2fdefault.aspx && sleep 1.5 && xdotool key Control+N
+UN MUTE SOUND: xdotool key XF86AudioMute
+WHATS ON K M F A: nowplaying_kmfa.sh | sed -e 's/[Nn]o\./number/g' | sed -e 's/[Oo]p\./opus/g' | $VOICE
+
+# ------- Markdown, html, gift, bash, etc ------- #
+ALTERNATE TEXT EQUALS THIS: $KEYPRESS ' alt=""' && xdotool key Left Control+v Right 
+ARTICLE TAGS: xdotool key Control+c && $KEYPRESS '<article>' && xdotool key Control+v && $KEYPRESS '</article>'
+ASIDE TAGS: xdotool key Control+c && $KEYPRESS '<aside>' && xdotool key Control+v && $KEYPRESS '</aside>'
+BASH HEADER: $KEYPRESS '#!/bin/bash\r\r'
+block quote tags: xdotool key Control+c && $KEYPRESS '<blockquote>' && xdotool key Control+v && $KEYPRESS '</blockquote>'
+center tags: xdotool key Control+c && $KEYPRESS '<center>' && xdotool key Control+v && $KEYPRESS '</center>'
+citation tags: xdotool key Control+c && $KEYPRESS '<cite>' && xdotool key Control+v && $KEYPRESS '</cite>'
+CLASS EQUALS RIGHT: $KEYPRESS ' class="right"'
+CLASS EQUALS THIS: $KEYPRESS ' class=""' && xdotool key Left Control+v Right 
+CLASS IS RIGHT: $KEYPRESS ' class="right"'
+CLOSE CENTER TAG: $KEYPRESS '</center>'
+CLOSE D I V TAG: $KEYPRESS '</div>'
+CLOSE H REF: $KEYPRESS '</a>'
+close p tag: $KEYPRESS '</p>'
+C S S COMMANDO: xdotool key Control+c && $KEYPRESS '/* ' && xdotool key Control+v && $KEYPRESS ' */'
+C S S HEADER: $KEYPRESS '<style type="text/css">\r\r</style>\[Up]'
+definition data TAGS: xdotool key Control+c && $KEYPRESS '<dd>' && xdotool key Control+v && $KEYPRESS '</dd>'
+definition term TAGS: xdotool key Control+c && $KEYPRESS '<dt>' && xdotool key Control+v && $KEYPRESS '</dt>'
+display block: $KEYPRESS 'display: block;'
+display inline: $KEYPRESS 'display: inline;'
+display none: $KEYPRESS 'display: none;'
+D I V TAGS: xdotool key Control+c && $KEYPRESS "<div>\r" && xdotool key Control+v && $KEYPRESS "\r</div>"
+EMAIL HYPERLINK: xdotool key Control+c && $KEYPRESS '<a href="mailto:' && xdotool key Control+v && $KEYPRESS '">' && xdotool key Control+v && $KEYPRESS '</a>'
+f a C S S: xvkbd -xsendevent -secure -file $CONFIGDIR/data/font-awesome.txt
+FACULTY FOOTER: xvkbd -xsendevent -secure -file $CONFIGDIR/data/faculty_footer.txt
+FACULTY HEADER: xvkbd -xsendevent -secure -file $CONFIGDIR/data/faculty_header.txt
+f a ICON: $KEYPRESS '<i class="fa fa-iconname fa-2x"></i>'
+FLAT SYMBOL: $KEYPRESS '&#9837;'
+H T BOLD: xdotool key Control+c && $KEYPRESS '<strong>'"$(xclip -o)"'</strong>'
+H T book title: xdotool key Control+c && $KEYPRESS '<cite>'"$(xclip -o)"'</cite>'
+H T code: xdotool key Control+c && $KEYPRESS '<code>' && xdotool key Control+v && $KEYPRESS '</code>'
+H T COMMANDO: xdotool key Control+c && $KEYPRESS '<!-- ' && xdotool key Control+v && $KEYPRESS ' -->'
+H T COMMENT: xdotool key Control+c && $KEYPRESS '<!-- ' && xdotool key Control+v && $KEYPRESS ' -->'
+H T HEADER ONE: xdotool key Control+c && $KEYPRESS '<h1>'"$(xclip -o)"'</h1>'
+H T HEADER THREE: xdotool key Control+c && $KEYPRESS '<h3>'"$(xclip -o)"'</h3>'
+H T HEADER TWO: xdotool key Control+c && $KEYPRESS '<h2>'"$(xclip -o)"'</h2>'
+H T ITALICS: xdotool key Control+c && $KEYPRESS '<em>'"$(xclip -o)"'</em>'
+H T page template: xvkbd -xsendevent -secure -file $CONFIGDIR/data/html_template.txt
+H T preformatted: xdotool key Control+c && $KEYPRESS '<pre>' && xdotool key Control+v && $KEYPRESS '</pre>'
+I D EQUALS THIS: $KEYPRESS ' id=""' && xdotool key Left Control+v Right 
+IMAGE C S S: xvkbd -xsendevent -secure -file $CONFIGDIR/data/img_css.txt
+IMAGE D I V: xvkbd -xsendevent -secure -file $CONFIGDIR/data/image_div.txt
+INSERT AUDIO: xvkbd -xsendevent -secure -file $CONFIGDIR/data/audio.txt
+INSERT IMAGE: $KEYPRESS '<img width="auto" src="\Cv' && $KEYPRESS '">'
+INSERT PANEL:  xvkbd -xsendevent -secure -file $CONFIGDIR/data/panel.txt
+INSERT PHONE ICON: xdotool key Control+c && sleep .2 && dotnum=$(xclip -o | sed -e 's/(//'| sed -e 's/ //g' | sed -e 's/[)-]/\./g') && rawnum=$(xclip -o | sed -e 's/[() -]//g') && $KEYPRESS "\Cv"'&nbsp; <a class="" href="tel:' && $KEYPRESS "$rawnum" && $KEYPRESS '" title="' && $KEYPRESS "\Cv" && $KEYPRESS '"><i class="fa fa-phone"></i></a>'
+INSERT PRINT BUTTON:  xvkbd -xsendevent -secure -file $CONFIGDIR/data/print_button.txt
+INSERT video: xvkbd -xsendevent -secure -file $CONFIGDIR/data/video.txt
+JAVASCRIPT DATE CODE: xvkbd -xsendevent -secure -file $CONFIGDIR/data/js_date.txt
+LABELS HEADER: xvkbd -xsendevent -secure -file $CONFIGDIR/data/labels.txt
+# link to a score in listening lists
+LINK TO SCORE: $KEYPRESS '<span class="small score_button"><a class="score_button" href="scores/' && xdotool key Control+v && $KEYPRESS '">score</a></span>'
+LIST ITEM TAGS: xdotool key Control+c && $KEYPRESS "<li>" && xdotool key Control+v && $KEYPRESS "</li>"
+MAKE SUPERSCRIPT: xdotool key Control+c && $KEYPRESS '<sup>'"$(xclip -o)"'</sup>'
+MAKE SUPER: xdotool key Control+c && $KEYPRESS '<sup>'"$(xclip -o)"'</sup>'
+MARKDOWN BOLD: xdotool key Control+c && $KEYPRESS '**'"$(xclip -o)"'**'
+MARKDOWN CODE: xdotool key Control+c && $KEYPRESS '`'"$(xclip -o)"'`'
+MARKDOWN HEADER: xvkbd -xsendevent -secure -file $CONFIGDIR/data/mkd_header.txt
+MARKDOWN HYPERLINK: xdotool key Control+c && sleep .2 && xdotool key BackSpace && sleep .2 && link_text=$(strings $CLIP | sed -n '1p') && sleep .2 && link_url=$(strings $CLIP | sed -n '2p') && $KEYPRESS "[$link_text]($link_url)"
+MARKDOWN ITALICS: xdotool key Control+c && $KEYPRESS '*'"$(xclip -o)"'*'
+MARKDOWN PREVIEW: $KEYPRESS "\Ca\Cc" && $CONFIGDIR/scripts/mdpreview.sh
+NATURAL SYMBOL: $KEYPRESS '&#9838;'
+NEW BULLET POINT: $KEYPRESS "\r\* "
+NEW LIST ITEM: $KEYPRESS "\r1. "
+new table row: $KEYPRESS '<tr></tr>' && xdotool key Left Left Left Left Left
+NO DECORATION: $KEYPRESS ' style="text-decoration: none"'
+OPEN CENTER TAG: $KEYPRESS '<center>'
+OPEN D I V TAG: $KEYPRESS '<div>'
+OPEN H REF: $KEYPRESS '<a href="">' && xdotool key Left Left
+open p tag: $KEYPRESS '<p>'
+PARAGRAPH TAGS: xdotool key Control+c && $KEYPRESS '<p>' && xdotool key Control+v && $KEYPRESS '</p>'
+PARAGRAPH TAGS: xdotool key Control+c && $KEYPRESS "<p>" && xdotool key Control+v && $KEYPRESS "</p>"
+PHOTO BY DANNY: $KEYPRESS 'title="photo by Danny Izzo http://nouveauphoteau.net"'
+QUARTER NOTE: $KEYPRESS '&#9833;'
+SCHOOL OF MUSIC C S S: $KEYPRESS '<link type="text/css" rel="stylesheet" href="../som.css"/>'
+SHARP SYMBOL: $KEYPRESS '&#9839;'
+SHORTEN YOU ARE EL: xdotool key Control+l && sleep .2 && xdotool key Control+c && sleep .2 && long_url=$(xclip -o) && sleep .2 && curl -s http://is.gd/api.php?longurl=`perl -MURI::Escape -e "print uri_escape('$long_url');"` | xclip -i && $KEYPRESS "$(xclip -o)"
+SPANDEX: xdotool key Control+c && $KEYPRESS '<span>'"$(xclip -o)"'</span>'
+SPAN THIS: xdotool key Control+c && $KEYPRESS '<span>'"$(xclip -o)"'</span>'
+specialty CLASS: $KEYPRESS ' class="specialty"'
+SPECIALTY SPAN: xdotool key Control+c && $KEYPRESS '<span class="specialty">'"$(xclip -o)"'</span>'
+table data tags: $KEYPRESS '<td></td>' && xdotool key Left Left Left Left Left
+table header tags: $KEYPRESS '<th></th>' && xdotool key Left Left Left Left Left
+TABLE TAGS: $KEYPRESS "<table>\r</table>"
+TARGET EQUALS BLANK: $KEYPRESS ' target="_blank"'
+text align center: $KEYPRESS 'text-align: center;'
+text align left: $KEYPRESS 'text-align: left;'
+TITLE EQUALS THIS: $KEYPRESS ' title=""' && xdotool key Left Control+v Right 
+UNORDERED LIST TAGS: xdotool key Control+c && $KEYPRESS "<ul>\r" && xdotool key Control+v && $KEYPRESS "\r</ul>"
+U T F EIGHT HEADER: xvkbd -xsendevent -secure -file $CONFIGDIR/data/utf8.txt
+VERBATIM HYPERLINK: xdotool key Control+c && $KEYPRESS '<a href="' && xdotool key Control+v && $KEYPRESS '">' && xdotool key Control+v && $KEYPRESS '</a>'
+
+# ----- INSERT HYPERLINK instructions ------ #
+# 1. do "save link" command
+# 2. select link text in document
+# 3. say "insert hyperlink"
+# ------------------------------------------ #
+
+SAVE LINK: xdotool key Control+c && xclip -o > /tmp/url.txt && echo "got it" | $VOICE
+INSERT HYPERLINK: xdotool key Control+c && $KEYPRESS '<a href="' && $KEYPRESS "$(cat /tmp/url.txt)" && $KEYPRESS '">' && xdotool key Control+v && $KEYPRESS '</a>' && rm /tmp/url.txt
+INSERT EYE FRAME: $KEYPRESS '<iframe width="auto" height="65" scrolling="no" frameborder="no" src=""></iframe>' && xdotool key Control+Left Left Left Left Left
+
+INSERT POPUP: xvkbd -xsendevent -secure -file $CONFIGDIR/data/popup.txt
+POPUP JAVASCRIPT HEADER: xvkbd -xsendevent -secure -file $CONFIGDIR/data/popup_js_code.txt
+
+#===============================
+
+ARE YOU LISTENING: choice=$(shuf -e nope yup | shuf -n1) ; echo "$choice" | $VOICE
+GOOD MORNING: echo "$(shuf -n1 $CONFIGDIR/data/greetings.txt)" | $VOICE 
+HOOS THE FLUFFIEST: echo "dingle is, of course" | $VOICE 
+HOOS THE MAN: echo "you are, $(whoami)" | $VOICE 
+HOWS THE WEATHER: $CONFIGDIR/scripts/speaktemp
+INSULT ME wILL: $CONFIGDIR/scripts/shakespeare.sh
+IS IT FRIDAY YET: $CONFIGDIR/scripts/fridayspeak.sh
+IS THAT RIGHT: choice=$(shuf -e yes no "absolutely not" "I don't know" "what do you think" maybe "let me think about it" |shuf -n1) ; echo "$choice" | $VOICE
+IS THAT TRUE: echo "$(shuf -n1 $CONFIGDIR/data/true.txt)" | $VOICE 
+REPEAT AFTER ME: sleep 7 ; $KEYPRESS "\Ca\Cc" ; xclip -o | sed -e 's/repeat after me//' | $VOICE
+SPEAK THIS: xdotool key Control+c && xclip -o | $VOICE
+SPIN: /home/$(whoami)/bin/twister.sh
+TESTING EE SPEAK: espeak "testing 1 2 1 2"
+THANKS: shuf -n1 $CONFIGDIR/data/thankyouresponses.txt | $VOICE 
+THANK YOU: shuf -n1 $CONFIGDIR/data/thankyouresponses.txt | $VOICE 
+THATS PRETTY RUDE: echo "$(shuf -n1 $CONFIGDIR/data/apologies.txt)" | $VOICE 
+TWELVE TONE SCRIPT: /home/$(whoami)/bin/serial.sh
+WHADDAYA THINK: echo "$(shuf -n1 $CONFIGDIR/data/opinions.txt)" | $VOICE 
+WHAT CAN WE DO IM BORED: echo "$(shuf -n1 $CONFIGDIR/data/bored.txt)" | $VOICE 
+WHAT DAY IS IT: date "+%A" | $VOICE 
+WHAT DO YOU THINK: echo "$(shuf -n1 $CONFIGDIR/data/opinions.txt)" | $VOICE 
+WHATS FOR BREAKFAST: echo "how about $(shuf -n1 $CONFIGDIR/data/breakfast.txt)" | $VOICE 
+WHATS FOR CHRISTMAS: echo "how about $(shuf -n1 $CONFIGDIR/data/christmas.txt)" | $VOICE
+WHATS FOR DINNER: echo "how about $(shuf -n1 $CONFIGDIR/data/dinner.txt)" | $VOICE 
+WHATS FOR LUNCH: echo "how about $(shuf -n1 $CONFIGDIR/data/lunch.txt)" | $VOICE 
+WHATS TODAYS DATE: date "+%A, %B %e %Y" | $VOICE
+WHATS TO EAT: echo "how about $(shuf -n1 $CONFIGDIR/data/ingredient.txt) $(shuf -n1 $CONFIGDIR/data/dish.txt)" | $VOICE
+WHAT TIME DOES KARATE START: $CONFIGDIR/scripts/karate.sh
+WHAT TIME DOES REDS CLOSE: $CONFIGDIR/scripts/reds.sh
+WHAT TIME DOES THE LIBRARY CLOSE: $CONFIGDIR/scripts/library.sh
+
+# --------------------- Time -------------------------- #
+# 
+# For a straight answer to your time question use this:
+#
+#    WHAT TIME IS IT: date "+%l:%M %p" | $VOICE 
+#
+# that's not much fun though so I have a script that 
+# does a virtual coin flip, and depending on whether 
+# it brings back a 0 or a 1 will you give you either 
+# the correct time or a randomly-chosen smart-alec answer
+# from a list of answers that I have put together.
+#
+# ----------------------------------------------------- # 
+
+WHAT TIME IS IT: $CONFIGDIR/scripts/whattime.sh
+WHAT TIME is KARATE: $CONFIGDIR/scripts/karate.sh
+WHEN DOES THE LIBRARY CLOSE: $CONFIGDIR/scripts/library.sh
+who showers first: choice=$(shuf -e isaac aiva | shuf -n1) ; echo "$choice" | $VOICE
+YES YOU DID: choice=$(shuf -e "no I didn't" "no no no" "nope" | shuf -n1) ; echo "$choice" | $VOICE
+YOGI BERRA: echo "$(shuf -n1 $CONFIGDIR/data/yogi.txt)" | $VOICE
+YOU JUST SAID THAT: echo "$(shuf -n1 $CONFIGDIR/data/justsaid.txt)" | $VOICE
+YOUR FUNNY: echo "$(shuf -n1 $CONFIGDIR/data/funny.txt)" | $VOICE 
+YOUR SO FUNNY: echo "$(shuf -n1 $CONFIGDIR/data/funny.txt)" | $VOICE 
+
