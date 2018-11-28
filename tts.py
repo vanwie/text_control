@@ -9,7 +9,7 @@ from concurrent import futures
 import soundfile as sf
 import tempfile
 import shutil
-import boto3
+#import boto3
 import os
 import requests
 from uuid import uuid4
@@ -41,7 +41,7 @@ S3_BUCKET = 'vanwie.stt'
 
 class AudioSegmenter(threading.Thread): 
     _damping = 0.15
-    _threshold = 1500
+    _threshold = 500
     _ratio = 1.5
     _timeout = 0.75 
     _max_duration = 90
@@ -131,56 +131,56 @@ class GoogleSpeechToText(threading.Thread):
                     print(datetime.datetime.now(), 'Decoding complete. No text returned')
 
 
-class AWSSpeechToText(threading.Thread):
-    def run(self):
-        s3 = boto3.client('s3')
-        try: 
-            s3.create_bucket(Bucket=S3_BUCKET, CreateBucketConfiguration={ 'LocationConstraint': 'us-west-2'})
-        except Exception as e: 
-            if not 'BucketAlreadyOwnedByYou' in str(e): 
-                print("E: %r" % str(e))
-                raise
-            
-        tempdir = tempfile.mkdtemp()
-        try: 
-            while not done.is_set(): 
-                try:
-                    data = stt_buffer.get(timeout=0.1)
-                except queue.Empty:
-                    continue
-
-                #fn = os.path.join(tempdir, '%d.flac' % 1000*time.time())
-                job = str(uuid4())
-                fn = '%s.flac' % job
-                print(datetime.datetime.now(), "Uploading file: %s" % fn)
-                pn = os.path.join(tempdir, fn)
-                sf.write(pn, data, RATE, 'PCM_16')
-                s3.upload_file(pn, S3_BUCKET, fn)
-
-                transcribe = boto3.client('transcribe')
-                transcribe.start_transcription_job(
-                        TranscriptionJobName=job,
-                        LanguageCode='en-US',
-                        MediaFormat='flac',
-                        Media={ 'MediaFileUri': 'https://s3-{region}.amazonaws.com/{bucket}/{file}'.format(region='us-west-2', bucket=S3_BUCKET, file=fn) }
-                        )
-
-                while not done.is_set():
-                    status = transcribe.get_transcription_job(TranscriptionJobName=job)
-                    if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
-                        break
-                    time.sleep(0.1)
-                if status['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED': 
-                    uri = status['TranscriptionJob']['Transcript']['TranscriptFileUri']
-                    try:
-                        transcript = requests.get(uri).json()['results']['transcripts'][0]['transcript']
-                        text_out.put(text)
-                    except:
-                        print(datetime.datetime.now(), "Unable to get transcript from job %r" % job)
-
-        finally: 
-            shutil.rmtree(tempdir)
-
+#class AWSSpeechToText(threading.Thread):
+#    def run(self):
+#        s3 = boto3.client('s3')
+#        try: 
+#            s3.create_bucket(Bucket=S3_BUCKET, CreateBucketConfiguration={ 'LocationConstraint': 'us-west-2'})
+#        except Exception as e: 
+#            if not 'BucketAlreadyOwnedByYou' in str(e): 
+#                print("E: %r" % str(e))
+#                raise
+#            
+#        tempdir = tempfile.mkdtemp()
+#        try: 
+#            while not done.is_set(): 
+#                try:
+#                    data = stt_buffer.get(timeout=0.1)
+#                except queue.Empty:
+#                    continue
+#
+#                #fn = os.path.join(tempdir, '%d.flac' % 1000*time.time())
+#                job = str(uuid4())
+#                fn = '%s.flac' % job
+#                print(datetime.datetime.now(), "Uploading file: %s" % fn)
+#                pn = os.path.join(tempdir, fn)
+#                sf.write(pn, data, RATE, 'PCM_16')
+#                s3.upload_file(pn, S3_BUCKET, fn)
+#
+#                transcribe = boto3.client('transcribe')
+#                transcribe.start_transcription_job(
+#                        TranscriptionJobName=job,
+#                        LanguageCode='en-US',
+#                        MediaFormat='flac',
+#                        Media={ 'MediaFileUri': 'https://s3-{region}.amazonaws.com/{bucket}/{file}'.format(region='us-west-2', bucket=S3_BUCKET, file=fn) }
+#                        )
+#
+#                while not done.is_set():
+#                    status = transcribe.get_transcription_job(TranscriptionJobName=job)
+#                    if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+#                        break
+#                    time.sleep(0.1)
+#                if status['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED': 
+#                    uri = status['TranscriptionJob']['Transcript']['TranscriptFileUri']
+#                    try:
+#                        transcript = requests.get(uri).json()['results']['transcripts'][0]['transcript']
+#                        text_out.put(text)
+#                    except:
+#                        print(datetime.datetime.now(), "Unable to get transcript from job %r" % job)
+#
+#        finally: 
+#            shutil.rmtree(tempdir)
+#
 class TextProcessor(threading.Thread): 
     commands = { 'exit' : None, 'cancel' : None }
     nysiis = None
