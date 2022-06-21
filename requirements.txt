@@ -9,7 +9,7 @@ google-cloud-speech==0.35.0
 googleapis-common-protos==1.5.3
 idna==2.7
 jmespath==0.9.3
-numpy==1.15.1
+numpy==1.22.0
 protobuf==3.6.1
 pyasn1==0.4.4
 pyasn1-modules==0.2.2
